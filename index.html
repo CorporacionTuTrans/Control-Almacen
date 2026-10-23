@@ -12,7 +12,7 @@ const today=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth(
 $('times').innerHTML=fields.map(([id,label])=>`<div class="field"><label for="${id}">${label}</label><div class="time-row"><input type="time" id="${id}"><button class="now" type="button" data-now="${id}">◷ Hora actual</button></div></div>`).join('');
 const keys={tracto:'almacen_placas_tracto_v4',acoplado:'almacen_placas_acoplado_v4',camion:'almacen_placas_camion_v4'};
 function plates(id){try{return JSON.parse(localStorage.getItem(keys[id])||'[]')}catch{return []}}
-function refreshPlate(id,preferred){const list=plates(id),sel=$(id);sel.innerHTML='<option value="">Selecciona una placa</option>';list.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o)});sel.value=preferred&&list.includes(preferred)?preferred:'';render()}
+function refreshPlate(id,preferred){const list=plates(id),sel=$(id);sel.innerHTML='<option value="">'+(list.length?'Selecciona una placa':'Sin placas: pulsa + para agregar')+'</option>';list.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o)});sel.value=preferred&&list.includes(preferred)?preferred:'';render()}
 function savePlate(id,list,selected){try{localStorage.setItem(keys[id],JSON.stringify(list))}catch{alert('El navegador no pudo guardar las placas. Verifica el almacenamiento local.')}refreshPlate(id,selected)}
 ['tracto','acoplado','camion'].forEach(id=>refreshPlate(id));
 document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>{
@@ -20,11 +20,11 @@ document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()
   let editor=row.nextElementSibling;
   if(editor&&editor.classList.contains('plate-editor')){editor.remove();return}
   editor=document.createElement('div');editor.className='plate-editor';
-  editor.style.cssText='display:flex;gap:7px;flex-wrap:wrap;margin-top:9px';
+  editor.style.cssText='display:flex;gap:7px;flex-wrap:wrap;margin-top:9px;padding:10px;background:#eaf5ef;border:1px solid #b9e2d2;border-radius:9px';
   const input=document.createElement('input');input.type='text';input.placeholder='Nueva placa (ej. ABC123)';input.maxLength=12;input.autocapitalize='characters';input.style.cssText='flex:1;min-width:145px';
   const save=document.createElement('button');save.type='button';save.className='mini';save.textContent='Guardar placa';
   const cancel=document.createElement('button');cancel.type='button';cancel.className='mini';cancel.textContent='Cancelar';
-  editor.append(input,save,cancel);row.insertAdjacentElement('afterend',editor);
+  editor.append(input,save,cancel);row.insertAdjacentElement('afterend',editor);editor.scrollIntoView({block:'nearest',behavior:'smooth'});
   cancel.addEventListener('click',()=>editor.remove());
   save.addEventListener('click',()=>{
     const p=input.value.trim().toUpperCase().replace(/\\s+/g,'');
