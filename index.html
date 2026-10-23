@@ -15,7 +15,27 @@ function plates(id){try{return JSON.parse(localStorage.getItem(keys[id])||'[]')}
 function refreshPlate(id,preferred){const list=plates(id),sel=$(id);sel.innerHTML='<option value="">Selecciona una placa</option>';list.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o)});sel.value=preferred&&list.includes(preferred)?preferred:'';render()}
 function savePlate(id,list,selected){try{localStorage.setItem(keys[id],JSON.stringify(list))}catch{alert('El navegador no pudo guardar las placas. Verifica el almacenamiento local.')}refreshPlate(id,selected)}
 ['tracto','acoplado','camion'].forEach(id=>refreshPlate(id));
-document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.add;let p=prompt('Ingresa la nueva placa de '+(id==='camion'?'camión':id)+':');if(p===null)return;p=p.trim().toUpperCase().replace(/\s+/g,'');if(!/^[A-Z0-9-]{5,12}$/.test(p)){alert('Ingresa una placa válida de 5 a 12 caracteres (letras, números o guion).');return}const list=plates(id);if(list.includes(p)){alert('La placa ya existe.');$(id).value=p;render();return}list.push(p);list.sort();savePlate(id,list,p)}));
+document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>{
+  const id=b.dataset.add, row=b.closest('.plate-row');
+  let editor=row.nextElementSibling;
+  if(editor&&editor.classList.contains('plate-editor')){editor.remove();return}
+  editor=document.createElement('div');editor.className='plate-editor';
+  editor.style.cssText='display:flex;gap:7px;flex-wrap:wrap;margin-top:9px';
+  const input=document.createElement('input');input.type='text';input.placeholder='Nueva placa (ej. ABC123)';input.maxLength=12;input.autocapitalize='characters';input.style.cssText='flex:1;min-width:145px';
+  const save=document.createElement('button');save.type='button';save.className='mini';save.textContent='Guardar placa';
+  const cancel=document.createElement('button');cancel.type='button';cancel.className='mini';cancel.textContent='Cancelar';
+  editor.append(input,save,cancel);row.insertAdjacentElement('afterend',editor);
+  cancel.addEventListener('click',()=>editor.remove());
+  save.addEventListener('click',()=>{
+    const p=input.value.trim().toUpperCase().replace(/\\s+/g,'');
+    if(!/^[A-Z0-9-]{5,12}$/.test(p)){alert('La placa debe tener entre 5 y 12 caracteres: letras, números o guion.');input.focus();return}
+    const list=plates(id);
+    if(!list.includes(p)){list.push(p);list.sort();savePlate(id,list,p)}
+    else{$(id).value=p;render()}
+    editor.remove();autoSave();toast('Placa '+p+' agregada a este celular.');
+  });
+  input.focus();
+}));
 document.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.del,p=v(id);if(!p){alert('Selecciona primero una placa.');return}if(confirm('¿Eliminar la placa '+p+' de la lista guardada?'))savePlate(id,plates(id).filter(x=>x!==p),'')}));
 function syncVehicle(){const c=v('vehiculo')==='CAMION';$('camposTracto').hidden=c;$('camposCamion').hidden=!c;$('tracto').required=!c;$('acoplado').required=!c;$('camion').required=c;render()}
 $('vehiculo').addEventListener('change',syncVehicle);
