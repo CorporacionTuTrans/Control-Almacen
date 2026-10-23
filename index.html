@@ -34,7 +34,7 @@ window.tutransSavePlate=function(id){
 };
 </script>
 <script>
-const fields=[['llegada','Hora de llegada'],['rampa','Hora de ingreso a la rampa'],['inicio','Hora de inicio de carga'],['fin','Hora de fin de carga'],['salida','Hora de salida de almacén']];
+const fields=[['llegada','Hora de llegada'],['inicio','Hora de inicio de carga'],['fin','Hora de fin de carga'],['salida','Hora de salida de almacén']];
 const $=id=>document.getElementById(id),v=id=>$(id).value.trim(),pad=n=>String(n).padStart(2,'0');
 const today=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};$('fecha').value=today();
 $('times').innerHTML=fields.map(([id,label])=>`<div class="field"><label for="${id}">${label}</label><div class="time-row"><input type="time" id="${id}"><button class="now" type="button" data-now="${id}">◷ Hora actual</button></div></div>`).join('');
