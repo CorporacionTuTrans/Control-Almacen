@@ -138,20 +138,27 @@ $('certificado').addEventListener('pointerdown',autoSave);
 $('certificado').addEventListener('click',autoSave);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')autoSave()});
 window.addEventListener('pagehide',autoSave);
-$('reset').addEventListener('click',async()=>{
- if(!confirm('¿Iniciar un nuevo registro? Se limpiarán todos los datos y fotografías de este formulario. Los registros pendientes guardados permanecerán disponibles.'))return;
- await cerrarCamara();
+$('reset').addEventListener('click',()=>{
+ if(!confirm('¿Iniciar un nuevo registro? Se borrarán los datos y fotografías del formulario actual. Los pendientes guardados se conservarán.'))return;
+ // Invalidate persisted form before any asynchronous camera cleanup.
+ try{localStorage.removeItem(AUTOSAVE_KEY)}catch{}
  activeDraft=null;
  delete fotosCamara.foto;
  delete fotosCamara.certificado;
- $('form').reset();
+ cerrarCamara().catch(console.error);
+ const form=$('form');
+ form.reset();
+ for(const el of form.querySelectorAll('input,select,textarea')){
+   if(el.id==='fecha')continue;
+   if(el.id==='tipo'){el.value='CARGA';continue}
+   if(el.id==='vehiculo'){el.value='TRACTO';continue}
+   if(el.id==='drafts'){el.value='';continue}
+   if(el.type==='button'||el.type==='submit'||el.type==='hidden')continue;
+   if(el.type==='checkbox'||el.type==='radio'){el.checked=false;continue}
+   el.value='';
+ }
  $('fecha').value=today();
- $('nombre').value='';
- $('cliente').value='';
  $('unidadAsignada').value='';
- ['tracto','acoplado','camion','km','origen','destino','llegada','inicio','fin','salida','foto','certificado'].forEach(id=>$(id).value='');
- $('tipo').value='CARGA';
- $('vehiculo').value='TRACTO';
  $('drafts').value='';
  const certPreview=$('vistaCert');
  if(certPreview){if(certPreview.src.startsWith('blob:'))URL.revokeObjectURL(certPreview.src);certPreview.remove()}
@@ -160,9 +167,10 @@ $('reset').addEventListener('click',async()=>{
  syncMotivo();
  refreshDrafts();
  $('drafts').value='';
- try{localStorage.removeItem(AUTOSAVE_KEY)}catch{}
+ // Save an explicitly blank snapshot, preventing older state from being restored.
+ autoSave();
  render();
- toast('Formulario limpio. Ya puedes iniciar un nuevo registro.');
+ toast('Nuevo registro listo: datos y fotografías limpiados.');
  window.scrollTo({top:0,behavior:'smooth'});
 });
 </script><script src="directorios-supabase.js"></script><script src="admin-almacen.js"></script><style>.plate-row button.mini{display:none!important}</style></body></html>
