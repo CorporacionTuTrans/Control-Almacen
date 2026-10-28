@@ -79,7 +79,7 @@ $('textOnly').addEventListener('click',openText);
 $('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(msg());toast('Mensaje copiado.')}catch{const t=document.createElement('textarea');t.value=msg();document.body.append(t);t.select();document.execCommand('copy');t.remove();toast('Mensaje copiado.')}});
 document.querySelectorAll('[data-now]').forEach(b=>b.addEventListener('click',()=>{const d=new Date();$(b.dataset.now).value=`${pad(d.getHours())}:${pad(d.getMinutes())}`;render()}));
 $('form').addEventListener('input',render);$('form').addEventListener('change',render);
-$('reset').addEventListener('click',()=>{if(!confirm('¿Limpiar el formulario? Las placas guardadas permanecerán disponibles.'))return;activeDraft=null;$('form').reset();$('fecha').value=today();showPhoto();syncVehicle();toast('Nuevo registro listo.')});syncVehicle();
+syncVehicle();
 
 const fotosCamara={};let flujoCamara=null,destinoCamara='foto';
 function evidencia(id){return fotosCamara[id]||document.getElementById(id).files[0]||null}
@@ -139,5 +139,31 @@ $('certificado').addEventListener('pointerdown',autoSave);
 $('certificado').addEventListener('click',autoSave);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')autoSave()});
 window.addEventListener('pagehide',autoSave);
-$('reset').addEventListener('click',()=>{try{localStorage.removeItem(AUTOSAVE_KEY)}catch{}});
+$('reset').addEventListener('click',async()=>{
+ if(!confirm('¿Iniciar un nuevo registro? Se limpiarán todos los datos y fotografías de este formulario. Los registros pendientes guardados permanecerán disponibles.'))return;
+ await cerrarCamara();
+ activeDraft=null;
+ delete fotosCamara.foto;
+ delete fotosCamara.certificado;
+ $('form').reset();
+ $('fecha').value=today();
+ $('nombre').value='';
+ $('cliente').value='';
+ $('unidadAsignada').value='';
+ ['tracto','acoplado','camion','km','origen','destino','llegada','inicio','fin','salida','foto','certificado'].forEach(id=>$(id).value='');
+ $('tipo').value='CARGA';
+ $('vehiculo').value='TRACTO';
+ $('drafts').value='';
+ const certPreview=$('vistaCert');
+ if(certPreview){if(certPreview.src.startsWith('blob:'))URL.revokeObjectURL(certPreview.src);certPreview.remove()}
+ showPhoto();
+ syncVehicle();
+ syncMotivo();
+ refreshDrafts();
+ $('drafts').value='';
+ try{localStorage.removeItem(AUTOSAVE_KEY)}catch{}
+ render();
+ toast('Formulario limpio. Ya puedes iniciar un nuevo registro.');
+ window.scrollTo({top:0,behavior:'smooth'});
+});
 </script><script src="directorios-supabase.js"></script><script src="admin-almacen.js"></script><style>.plate-row button.mini{display:none!important}</style></body></html>
