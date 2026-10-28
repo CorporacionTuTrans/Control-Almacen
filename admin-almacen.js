@@ -30,15 +30,15 @@ let rows=[];
 async function load(){
  if(!admin)return;
  try{
- const table=$('adminTable').value;rows=(await call('list',{table})).rows;
- $('adminRows').innerHTML=rows.map(r=>'<div style="display:flex;gap:7px;align-items:center;justify-content:space-between;border-bottom:1px solid #ddd;padding:7px 0"><span>'+escape(r.nombre||r.placa)+' '+(r.tipo?'('+escape(r.tipo)+')':'')+(r.activo?'':' [Inactivo]')+'</span><span><button type="button" class="mini" data-edit="'+r.id+'">Editar</button> <button type="button" class="mini" data-toggle="'+r.id+'">'+(r.activo?'Desactivar':'Activar')+'</button></span></div>').join('');
+ const table=$('adminTable').value;rows=(await call('list',{table})).rows;state('Registros encontrados: '+rows.length+'. Selecciona Editar o Eliminar, o usa Agregar.');
+ $('adminRows').innerHTML=rows.map(r=>'<div style="display:flex;gap:7px;align-items:center;justify-content:space-between;border-bottom:1px solid #ddd;padding:7px 0"><span>'+escape(r.nombre||r.placa)+' '+(r.tipo?'('+escape(r.tipo)+')':'')+(r.activo?'':' [Inactivo]')+'</span><span><button type="button" class="mini" data-edit="'+r.id+'">Editar</button> <button type="button" class="mini" data-toggle="'+r.id+'">'+(r.activo?'Eliminar':'Restaurar')+'</button></span></div>').join('');
  }catch(e){state(e.message)}
 }
 async function save(){
  const table=$('adminTable').value,id=$('adminId').value;
  const params={table,...(table==='vehiculos'?{placa:$('adminName').value,tipo:$('adminType').value}:{nombre:$('adminName').value})};
  if(id)params.id=Number(id);
- try{await call('save',params);$('adminId').value='';$('adminName').value='';state('Datos guardados en Supabase');await load();await window.tutransRefreshCatalogs?.()}catch(e){state(e.message)}
+ try{await call('save',params);$('adminId').value='';$('adminName').value='';state('Registro '+(id?'editado':'agregado')+' correctamente en Supabase');await load();await window.tutransRefreshCatalogs?.()}catch(e){state(e.message)}
 }
 $('adminLogin').addEventListener('submit',login);
 $('adminLogout').addEventListener('click',logout);
@@ -47,7 +47,7 @@ $('adminSave').addEventListener('click',save);
 $('adminRows').addEventListener('click',async e=>{
  const edit=e.target.closest('[data-edit]'),toggle=e.target.closest('[data-toggle]');
  if(edit){const r=rows.find(x=>x.id===Number(edit.dataset.edit));if(!r)return;$('adminId').value=r.id;$('adminName').value=r.nombre||r.placa;if(r.tipo)$('adminType').value=r.tipo;return}
- if(toggle){const r=rows.find(x=>x.id===Number(toggle.dataset.toggle));if(!r||!confirm((r.activo?'Desactivar':'Activar')+' este registro para todos los celulares?'))return;
+ if(toggle){const r=rows.find(x=>x.id===Number(toggle.dataset.toggle));if(!r||!confirm((r.activo?'Eliminar':'Restaurar')+' este registro del directorio compartido? '+(r.activo?'Se ocultará para todos los conductores, pero podrá restaurarse.':'')))return;
  try{await call('toggle',{table:$('adminTable').value,id:r.id,activo:!r.activo});await load();await window.tutransRefreshCatalogs?.()}catch(err){state(err.message)}}
 });
 setInterval(async()=>{if(admin)await renew()},45*60*1000);
